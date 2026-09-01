@@ -23,11 +23,14 @@ import {
   fetchClassesForTeacher,
   fetchSessionsForBatch,
   fetchSlotsForSession,
-  fetchTeachersForDay,
   getDayFromDate,
   submitAttendance,
   validateStudent,
 } from "@/lib/mockData";
+
+import {
+  fetchTeachersFromApi,
+} from "@/lib/nexoraApi";
 import type { Option } from "@/types/attendance";
 
 type StudentStatus =
@@ -139,21 +142,65 @@ export default function AttendanceForm() {
 
 
   /* ---------------- cascading fetch effects ---------------- */
-  useEffect(() => {
-    let active = true;
-    setTeachers([]);
-    setForm((f) => ({ ...f, teacherId: "", classId: "", batchId: "", session: "", slotId: "" }));
-    if (!day) return;
-    setLoading((l) => ({ ...l, teachers: true }));
-    fetchTeachersForDay(day).then((res) => {
+useEffect(() => {
+  let active = true;
+
+  setTeachers([]);
+
+  setForm((f) => ({
+    ...f,
+    teacherId: "",
+    classId: "",
+    batchId: "",
+    session: "",
+    slotId: "",
+  }));
+
+  if (
+    !form.date ||
+    isFutureDate(form.date)
+  ) {
+    return;
+  }
+
+  setLoading((l) => ({
+    ...l,
+    teachers: true,
+  }));
+
+  fetchTeachersFromApi(form.date)
+    .then((res) => {
       if (!active) return;
+
       setTeachers(res);
-      setLoading((l) => ({ ...l, teachers: false }));
+    })
+    .catch((error) => {
+      if (!active) return;
+
+      console.error(
+        "Teacher API error:",
+        error
+      );
+
+      setGlobalError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load teachers."
+      );
+    })
+    .finally(() => {
+      if (!active) return;
+
+      setLoading((l) => ({
+        ...l,
+        teachers: false,
+      }));
     });
-    return () => {
-      active = false;
-    };
-  }, [day, setForm]); 
+
+  return () => {
+    active = false;
+  };
+}, [form.date]);
 
   useEffect(() => {
     let active = true;
