@@ -471,54 +471,92 @@ useEffect(() => {
 ]);
 
   /* ---------------- student ID validation (debounced) ---------------- */
-  useEffect(() => {
-    const id = form.studentId.trim();
-    if (!/^ST\d{5}$/i.test(id)) {
-      setStudentStatus({ state: "idle" });
-      return;
-    }
-    if (!id) {
-      setStudentStatus({ state: "idle" });
-      return;
-    }
-    const contextComplete =
-      form.teacherId &&
-      form.classId &&
-      form.batchId &&
-      form.session &&
-      form.slotId &&
-      day;
-    if (!contextComplete) {
-      // Just soft-idle; user must complete previous fields.
-      setStudentStatus({ state: "idle" });
+ useEffect(() => {
+  const id = form.studentId.trim().toUpperCase();
+
+  if (!id) {
+    setStudentStatus({ state: "idle" });
+    return;
+  }
+
+  // Exact Student ID format only:
+  // ST + 5 digits
+  // Example: ST00001
+  if (!/^ST\d{5}$/.test(id)) {
+    setStudentStatus({
+      state: "invalid",
+      message: "Invalid Student ID format",
+    });
+    return;
+  }
+
+  const contextComplete =
+    form.date &&
+    form.teacherId &&
+    form.classId &&
+    form.batchId &&
+    form.session &&
+    form.slotId &&
+    day;
+
+  if (!contextComplete) {
+    setStudentStatus({ state: "idle" });
+    return;
+  }
+
+  let cancelled = false;
+
+  setStudentStatus({ state: "loading" });
+
+  const handle = setTimeout(async () => {
+    const res = await validateStudentFromApi({
+      studentId: id,
+      date: form.date,
+      day,
+      teacherId: form.teacherId,
+      classId: form.classId,
+      batchId: form.batchId,
+      session: form.session,
+      slotId: form.slotId,
+    });
+
+    // Ignore old/stale API response
+    if (cancelled) return;
+
+    // Extra safety:
+    // only apply response if current input is still the same ID
+    if (form.studentId.trim().toUpperCase() !== id) {
       return;
     }
 
-    setStudentStatus({ state: "loading" });
-    const handle = setTimeout(() => {
-      validateStudentFromApi({
-        studentId: id,
-        date: form.date,
-        day,
-        teacherId: form.teacherId,
-        classId: form.classId,
-        batchId: form.batchId,
-        session: form.session,
-        slotId: form.slotId,
-      }).then((res) => {
-        if (res.ok && res.studentName) {
-          setStudentStatus({ state: "valid", name: res.studentName });
-        } else {
-          setStudentStatus({
-            state: "invalid",
-            message: res.message || "Student ID not found",
-          });
-        }
+    if (res.ok && res.studentName) {
+      setStudentStatus({
+        state: "valid",
+        name: res.studentName,
       });
-    }, 250);
+    } else {
+      setStudentStatus({
+        state: "invalid",
+        message:
+          res.message || "Student ID not found",
+      });
+    }
+  }, 250);
 
-    return () => clearTimeout(handle);
-  }, [form.studentId, form.teacherId, form.classId, form.batchId, form.slotId, day]);
+  return () => {
+    cancelled = true;
+    clearTimeout(handle);
+  };
+}, [
+  form.studentId,
+  form.date,
+  form.teacherId,
+  form.classId,
+  form.batchId,
+  form.session,
+  form.slotId,
+  day,
+]);
 
   /* ---------------- helpers ---------------- */
   // setField was defined here. Moved up and wrapped in useCallback.
@@ -744,7 +782,13 @@ useEffect(() => {
               <input
                 id="studentId"
                 value={form.studentId}
-                onChange={(e) => setField("studentId", e.target.value.toUpperCase())}
+                maxLength={7}
+                onChange={(e) =>
+                  setField(
+                    "studentId",
+                    e.target.value.toUpperCase()
+                  )
+                }
                 placeholder="ST00001"
                 autoComplete="off"
                 className="w-full rounded-xl border border-input bg-card px-4 py-3 pr-10 text-base sm:text-sm text-foreground field-focus min-h-[48px] uppercase tracking-wider font-semibold placeholder:font-normal placeholder:text-muted-foreground/60 hover:border-brand-teal/50"
