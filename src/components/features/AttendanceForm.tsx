@@ -21,7 +21,6 @@ import StatusCard from "./StatusCard";
 import {
   getDayFromDate,
   submitAttendance,
-  validateStudent,
 } from "@/lib/mockData";
 
 import {
@@ -30,6 +29,7 @@ import {
   fetchBatchesFromApi,
   fetchSessionsFromApi,
   fetchSlotsFromApi,
+  validateStudentFromApi,
 } from "@/lib/nexoraApi";
 
 import type { Option } from "@/types/attendance";
@@ -478,7 +478,12 @@ useEffect(() => {
       return;
     }
     const contextComplete =
-      form.teacherId && form.classId && form.batchId && form.slotId && day;
+      form.teacherId &&
+      form.classId &&
+      form.batchId &&
+      form.session &&
+      form.slotId &&
+      day;
     if (!contextComplete) {
       // Just soft-idle; user must complete previous fields.
       setStudentStatus({ state: "idle" });
@@ -487,13 +492,15 @@ useEffect(() => {
 
     setStudentStatus({ state: "loading" });
     const handle = setTimeout(() => {
-      validateStudent({
+      validateStudentFromApi({
         studentId: id,
+        date: form.date,
+        day,
         teacherId: form.teacherId,
         classId: form.classId,
         batchId: form.batchId,
+        session: form.session,
         slotId: form.slotId,
-        day,
       }).then((res) => {
         if (res.ok && res.studentName) {
           setStudentStatus({ state: "valid", name: res.studentName });
@@ -776,7 +783,7 @@ useEffect(() => {
                   <Loader2 className="h-4 w-4 animate-spin" /> Verifying student…
                 </span>
               ) : (
-                <span className="text-muted-foreground">Ahmed Khan</span>
+                <span className="text-muted-foreground"> Auto-filled after ID verification</span>
               )}
             </div>
           </FormField>
