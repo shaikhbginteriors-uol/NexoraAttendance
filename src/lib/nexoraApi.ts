@@ -162,3 +162,45 @@ export async function fetchSessionsFromApi(
     label: item.name,
   }));
 }
+/* ==============================
+    SLOT
+============================== */
+
+export async function fetchSlotsFromApi(
+  date: string,
+  teacherId: string,
+  classId: string,
+  batchId: string,
+  session: string
+): Promise<Option[]> {
+  const response = await fetch("/api/nexora", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "slots",
+      payload: {
+        date,
+        teacherId,
+        classId,
+        batchId,
+        session,
+      },
+    }),
+  });
+
+  const result: NexoraApiResponse<ApiOption[]> =
+    await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(
+      result.error || "Unable to load time slots."
+    );
+  }
+
+  return (result.data || []).map((item) => ({
+    id: item.id,
+    label: item.name,
+  }));
+}
