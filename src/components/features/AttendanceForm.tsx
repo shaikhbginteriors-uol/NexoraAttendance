@@ -20,7 +20,6 @@ import SelectField from "./SelectField";
 import StatusCard from "./StatusCard";
 import {
   fetchBatchesForClass,
-  fetchClassesForTeacher,
   fetchSessionsForBatch,
   fetchSlotsForSession,
   getDayFromDate,
@@ -30,7 +29,9 @@ import {
 
 import {
   fetchTeachersFromApi,
+  fetchClassesFromApi,
 } from "@/lib/nexoraApi";
+
 import type { Option } from "@/types/attendance";
 
 type StudentStatus =
@@ -202,21 +203,68 @@ useEffect(() => {
   };
 }, [form.date]);
 
-  useEffect(() => {
-    let active = true;
-    setClasses([]);
-    setForm((f) => ({ ...f, classId: "", batchId: "", session: "", slotId: "" }));
-    if (!form.teacherId) return;
-    setLoading((l) => ({ ...l, classes: true }));
-    fetchClassesForTeacher(form.teacherId).then((res) => {
+useEffect(() => {
+  let active = true;
+
+  setClasses([]);
+
+  setForm((f) => ({
+    ...f,
+    classId: "",
+    batchId: "",
+    session: "",
+    slotId: "",
+  }));
+
+  if (
+    !form.date ||
+    !form.teacherId ||
+    isFutureDate(form.date)
+  ) {
+    return;
+  }
+
+  setLoading((l) => ({
+    ...l,
+    classes: true,
+  }));
+
+  fetchClassesFromApi(
+    form.date,
+    form.teacherId
+  )
+    .then((res) => {
       if (!active) return;
+
       setClasses(res);
-      setLoading((l) => ({ ...l, classes: false }));
+    })
+    .catch((error) => {
+      if (!active) return;
+
+      console.error(
+        "Class API error:",
+        error
+      );
+
+      setGlobalError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load classes."
+      );
+    })
+    .finally(() => {
+      if (!active) return;
+
+      setLoading((l) => ({
+        ...l,
+        classes: false,
+      }));
     });
-    return () => {
-      active = false;
-    };
-  }, [form.teacherId, setForm]); 
+
+  return () => {
+    active = false;
+  };
+}, [form.date, form.teacherId]);
 
   useEffect(() => {
     let active = true;
