@@ -19,7 +19,6 @@ import FormField from "./FormField";
 import SelectField from "./SelectField";
 import StatusCard from "./StatusCard";
 import {
-  fetchSlotsForSession,
   getDayFromDate,
   submitAttendance,
   validateStudent,
@@ -30,6 +29,7 @@ import {
   fetchClassesFromApi,
   fetchBatchesFromApi,
   fetchSessionsFromApi,
+  fetchSlotsFromApi,
 } from "@/lib/nexoraApi";
 
 import type { Option } from "@/types/attendance";
@@ -402,22 +402,73 @@ useEffect(() => {
 
   /* ---------------- cascading SLOT fetch effects ---------------- */
 
-  
-  useEffect(() => {
-    let active = true;
-    setSlots([]);
-    setForm((f) => ({ ...f, slotId: "" }));
-    if (!form.session) return;
-    setLoading((l) => ({ ...l, slots: true }));
-    fetchSlotsForSession(form.session).then((res) => {
+useEffect(() => {
+  let active = true;
+
+  setSlots([]);
+
+  setForm((f) => ({
+    ...f,
+    slotId: "",
+  }));
+
+  if (
+    !form.date ||
+    !form.teacherId ||
+    !form.classId ||
+    !form.batchId ||
+    !form.session ||
+    isFutureDate(form.date)
+  ) {
+    return;
+  }
+
+  setLoading((l) => ({
+    ...l,
+    slots: true,
+  }));
+
+  fetchSlotsFromApi(
+    form.date,
+    form.teacherId,
+    form.classId,
+    form.batchId,
+    form.session
+  )
+    .then((res) => {
       if (!active) return;
       setSlots(res);
-      setLoading((l) => ({ ...l, slots: false }));
+    })
+    .catch((error) => {
+      if (!active) return;
+
+      console.error("Time Slot API error:", error);
+
+      setGlobalError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load time slots."
+      );
+    })
+    .finally(() => {
+      if (!active) return;
+
+      setLoading((l) => ({
+        ...l,
+        slots: false,
+      }));
     });
-    return () => {
-      active = false;
-    };
-  }, [form.session, setForm]); 
+
+  return () => {
+    active = false;
+  };
+}, [
+  form.date,
+  form.teacherId,
+  form.classId,
+  form.batchId,
+  form.session,
+]);
 
   /* ---------------- student ID validation (debounced) ---------------- */
   useEffect(() => {
