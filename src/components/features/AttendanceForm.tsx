@@ -19,7 +19,6 @@ import FormField from "./FormField";
 import SelectField from "./SelectField";
 import StatusCard from "./StatusCard";
 import {
-  fetchBatchesForClass,
   fetchSessionsForBatch,
   fetchSlotsForSession,
   getDayFromDate,
@@ -30,6 +29,7 @@ import {
 import {
   fetchTeachersFromApi,
   fetchClassesFromApi,
+  fetchBatchesFromApi,
 } from "@/lib/nexoraApi";
 
 import type { Option } from "@/types/attendance";
@@ -142,7 +142,7 @@ export default function AttendanceForm() {
   }, [setField]);
 
 
-  /* ---------------- cascading fetch effects ---------------- */
+  /* ---------------- cascading Date fetch effects ---------------- */
 useEffect(() => {
   let active = true;
 
@@ -202,6 +202,8 @@ useEffect(() => {
     active = false;
   };
 }, [form.date]);
+
+  /* ---------------- cascading Teacher fetch effects ---------------- */
 
 useEffect(() => {
   let active = true;
@@ -266,21 +268,67 @@ useEffect(() => {
   };
 }, [form.date, form.teacherId]);
 
-  useEffect(() => {
-    let active = true;
-    setBatches([]);
-    setForm((f) => ({ ...f, batchId: "", session: "", slotId: "" }));
-    if (!form.classId) return;
-    setLoading((l) => ({ ...l, batches: true }));
-    fetchBatchesForClass(form.classId).then((res) => {
+  /* ---------------- cascading Batches fetch effects ---------------- */
+
+useEffect(() => {
+  let active = true;
+
+  setBatches([]);
+
+  setForm((f) => ({
+    ...f,
+    batchId: "",
+    session: "",
+    slotId: "",
+  }));
+
+  if (
+    !form.date ||
+    !form.teacherId ||
+    !form.classId ||
+    isFutureDate(form.date)
+  ) {
+    return;
+  }
+
+  setLoading((l) => ({
+    ...l,
+    batches: true,
+  }));
+
+  fetchBatchesFromApi(
+    form.date,
+    form.teacherId,
+    form.classId
+  )
+    .then((res) => {
       if (!active) return;
       setBatches(res);
-      setLoading((l) => ({ ...l, batches: false }));
+    })
+    .catch((error) => {
+      if (!active) return;
+
+      console.error("Batch API error:", error);
+
+      setGlobalError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load batches."
+      );
+    })
+    .finally(() => {
+      if (!active) return;
+
+      setLoading((l) => ({
+        ...l,
+        batches: false,
+      }));
     });
-    return () => {
-      active = false;
-    };
-  }, [form.classId, setForm]); 
+
+  return () => {
+    active = false;
+  };
+}, [form.date, form.teacherId, form.classId]);
 
   useEffect(() => {
     let active = true;
