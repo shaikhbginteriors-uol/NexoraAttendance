@@ -156,3 +156,56 @@
   }
   .animate-pop { animation: pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 }
+
+
+
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    zoom: 0.68;
+    overflow: visible !important;
+  }
+
+  #root {
+    width: 100%;
+    min-height: auto !important;
+  }
+
+  main {
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .min-h-screen {
+    min-height: auto !important;
+  }
+
+  section,
+  footer,
+  form,
+  div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  footer {
+    margin-top: 16px !important;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+}
