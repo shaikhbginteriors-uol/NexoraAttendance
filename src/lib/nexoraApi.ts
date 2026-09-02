@@ -223,87 +223,70 @@ export async function validateStudentFromApi(params: {
   studentName?: string;
   message?: string;
 }> {
-  // Step 1: Student ID lookup
-  const lookupResponse = await fetch("/api/nexora", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action: "lookupStudent",
-      payload: {
-        studentId: params.studentId,
+  try {
+    const response = await fetch("/api/nexora", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        action: "verifyEnrollment",
+        payload: {
+          studentId: params.studentId,
+          date: params.date,
+          day: params.day,
+          teacherId: params.teacherId,
+          classId: params.classId,
+          batchId: params.batchId,
+          session: params.session,
+          slotId: params.slotId,
+        },
+      }),
+    });
 
-  const lookupResult = await lookupResponse.json();
+    const result = await response.json();
 
-  if (!lookupResponse.ok || !lookupResult.ok) {
-    return {
-      ok: false,
-      message: lookupResult.error || "Unable to verify Student ID.",
-    };
-  }
+    if (!response.ok || !result.ok) {
+      return {
+        ok: false,
+        message:
+          result.error || "Unable to verify student.",
+      };
+    }
 
-  if (
-    !lookupResult.data ||
-    lookupResult.data.status === "not_found"
-  ) {
-    return {
-      ok: false,
-      message: "Student ID not found",
-    };
-  }
+    if (result.data?.status === "not_found") {
+      return {
+        ok: false,
+        message: "Student ID not found",
+      };
+    }
 
-  // Step 2: Enrollment verification
-  const verifyResponse = await fetch("/api/nexora", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      action: "verifyEnrollment",
-      payload: {
-        studentId: params.studentId,
-        date: params.date,
-        day: params.day,
-        teacherId: params.teacherId,
-        classId: params.classId,
-        batchId: params.batchId,
-        session: params.session,
-        slotId: params.slotId,
-      },
-    }),
-  });
+    if (result.data?.status === "not_enrolled") {
+      return {
+        ok: false,
+        message:
+          "Student is not assigned to this class.",
+      };
+    }
 
-  const verifyResult = await verifyResponse.json();
+    if (result.data?.status === "ok") {
+      return {
+        ok: true,
+        studentName: result.data.studentName,
+      };
+    }
 
-  if (!verifyResponse.ok || !verifyResult.ok) {
-    return {
-      ok: false,
-      message: verifyResult.error || "Unable to verify enrollment.",
-    };
-  }
-
-  if (verifyResult.data?.status === "not_enrolled") {
-    return {
-      ok: false,
-      message: "Student is not assigned to this class.",
-    };
-  }
-
-  if (verifyResult.data?.status !== "ok") {
     return {
       ok: false,
       message: "Student verification failed.",
     };
-  }
+  } catch (error) {
+    console.error("Student verification error:", error);
 
-  return {
-    ok: true,
-    studentName:
-      verifyResult.data.studentName ||
-      lookupResult.data.studentName,
-  };
+    return {
+      ok: false,
+      message:
+        "Unable to verify student. Please try again.",
+    };
+  }
 }
