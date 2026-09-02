@@ -290,3 +290,96 @@ export async function validateStudentFromApi(params: {
     };
   }
 }
+
+/* ==============================
+    SUBMIT BUTTON
+============================== */
+
+export async function submitAttendanceToApi(params: {
+  date: string;
+  teacherId: string;
+  classId: string;
+  batchId: string;
+  session: string;
+  slotId: string;
+  studentId: string;
+}): Promise<{
+  ok: boolean;
+  duplicate?: boolean;
+  message?: string;
+  data?: {
+    status: string;
+    studentName: string;
+    teacher: string;
+    className: string;
+    batch: string;
+    session: string;
+    timeSlot: string;
+    date: string;
+    day: string;
+  };
+}> {
+  try {
+    const response = await fetch("/api/nexora", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "submitAttendance",
+        payload: {
+          date: params.date,
+          teacherId: params.teacherId,
+          classId: params.classId,
+          batchId: params.batchId,
+          session: params.session,
+          slotId: params.slotId,
+          studentId: params.studentId,
+        },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      return {
+        ok: false,
+        message:
+          result.error ||
+          "Unable to submit attendance.",
+      };
+    }
+
+    if (result.data?.status === "duplicate") {
+      return {
+        ok: false,
+        duplicate: true,
+        message:
+          result.data.message ||
+          "Attendance already submitted",
+      };
+    }
+
+    if (result.data?.status !== "success") {
+      return {
+        ok: false,
+        message:
+          result.data?.message ||
+          "Attendance submission failed.",
+      };
+    }
+
+    return {
+      ok: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error("Attendance submit error:", error);
+
+    return {
+      ok: false,
+      message:
+        "Unable to submit attendance. Please try again.",
+    };
+  }
+}
