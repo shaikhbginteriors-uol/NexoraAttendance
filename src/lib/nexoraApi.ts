@@ -82,3 +82,42 @@ export async function fetchClassesFromApi(
     label: item.name,
   }));
 }
+
+/* ==============================
+   BATCHES
+============================== */
+
+export async function fetchBatchesFromApi(
+  date: string,
+  teacherId: string,
+  classId: string
+): Promise<Option[]> {
+  const response = await fetch("/api/nexora", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "batches",
+      payload: {
+        date,
+        teacherId,
+        classId,
+      },
+    }),
+  });
+
+  const result: NexoraApiResponse<ApiOption[]> =
+    await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(
+      result.error || "Unable to load batches."
+    );
+  }
+
+  return (result.data || []).map((item) => ({
+    id: item.id,
+    label: item.name,
+  }));
+}
