@@ -121,3 +121,44 @@ export async function fetchBatchesFromApi(
     label: item.name,
   }));
 }
+
+/* ==============================
+    SESSIONS
+============================== */
+
+export async function fetchSessionsFromApi(
+  date: string,
+  teacherId: string,
+  classId: string,
+  batchId: string
+): Promise<Option[]> {
+  const response = await fetch("/api/nexora", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      action: "sessions",
+      payload: {
+        date,
+        teacherId,
+        classId,
+        batchId,
+      },
+    }),
+  });
+
+  const result: NexoraApiResponse<ApiOption[]> =
+    await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(
+      result.error || "Unable to load sessions."
+    );
+  }
+
+  return (result.data || []).map((item) => ({
+    id: item.id,
+    label: item.name,
+  }));
+}
