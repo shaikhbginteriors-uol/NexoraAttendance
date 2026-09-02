@@ -679,7 +679,7 @@ useEffect(() => {
             label="Date"
             htmlFor="date"
             required
-            hint={day ? day : "Day auto-detected"}
+            hint={day ? `${day} • Today only` : "Today only"}
             error={errors.date}
           >
             <div className="relative">
@@ -687,10 +687,13 @@ useEffect(() => {
                 id="date"
                 type="date"
                 value={form.date}
+                min={todayISO()}
                 max={todayISO()}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="w-full appearance-none rounded-xl border border-input bg-card px-4 py-3 pr-10 text-base sm:text-sm text-foreground field-focus min-h-[48px] hover:border-brand-teal/50 dark:[color-scheme:dark]"
+                readOnly
+                tabIndex={-1}
+                className="w-full appearance-none rounded-xl border border-input bg-muted px-4 py-3 pr-10 text-base sm:text-sm text-foreground min-h-[48px] cursor-not-allowed dark:[color-scheme:dark]"
               />
+          
               <Calendar className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-teal" />
             </div>
           </FormField>
