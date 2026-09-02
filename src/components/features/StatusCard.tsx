@@ -64,14 +64,15 @@ export default function StatusCard({ data, onReset }: StatusCardProps) {
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={onReset}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-teal px-4 py-3 text-sm font-semibold text-white hover:bg-brand-teal-dark active:scale-[0.98] transition min-h-[48px]"
+            className="print-hide inline-flex items-center justify-center gap-2 rounded-xl bg-brand-teal px-4 py-3 text-sm font-semibold text-white hover:bg-brand-teal-dark active:scale-[0.98] transition min-h-[48px]"
           >
             <RotateCcw className="h-4 w-4" />
             Submit Another
           </button>
+        
           <button
             onClick={() => window.print()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-teal/20 bg-brand-teal-light px-4 py-3 text-sm font-semibold text-brand-teal hover:bg-brand-teal-light/80 active:scale-[0.98] transition min-h-[48px]"
+            className="print-hide inline-flex items-center justify-center gap-2 rounded-xl border border-brand-teal/20 bg-brand-teal-light px-4 py-3 text-sm font-semibold text-brand-teal hover:bg-brand-teal-light/80 active:scale-[0.98] transition min-h-[48px]"
           >
             <Download className="h-4 w-4" />
             Save Receipt
