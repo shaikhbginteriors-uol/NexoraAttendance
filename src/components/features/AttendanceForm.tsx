@@ -19,7 +19,6 @@ import FormField from "./FormField";
 import SelectField from "./SelectField";
 import StatusCard from "./StatusCard";
 import {
-  fetchSessionsForBatch,
   fetchSlotsForSession,
   getDayFromDate,
   submitAttendance,
@@ -30,6 +29,7 @@ import {
   fetchTeachersFromApi,
   fetchClassesFromApi,
   fetchBatchesFromApi,
+  fetchSessionsFromApi,
 } from "@/lib/nexoraApi";
 
 import type { Option } from "@/types/attendance";
@@ -330,22 +330,79 @@ useEffect(() => {
   };
 }, [form.date, form.teacherId, form.classId]);
 
-  useEffect(() => {
-    let active = true;
-    setSessions([]);
-    setForm((f) => ({ ...f, session: "", slotId: "" }));
-    if (!form.batchId) return;
-    setLoading((l) => ({ ...l, sessions: true }));
-    fetchSessionsForBatch(form.batchId).then((res) => {
+
+  /* ---------------- cascading SESSION fetch effects ---------------- */
+  
+
+useEffect(() => {
+  let active = true;
+
+  setSessions([]);
+
+  setForm((f) => ({
+    ...f,
+    session: "",
+    slotId: "",
+  }));
+
+  if (
+    !form.date ||
+    !form.teacherId ||
+    !form.classId ||
+    !form.batchId ||
+    isFutureDate(form.date)
+  ) {
+    return;
+  }
+
+  setLoading((l) => ({
+    ...l,
+    sessions: true,
+  }));
+
+  fetchSessionsFromApi(
+    form.date,
+    form.teacherId,
+    form.classId,
+    form.batchId
+  )
+    .then((res) => {
       if (!active) return;
       setSessions(res);
-      setLoading((l) => ({ ...l, sessions: false }));
-    });
-    return () => {
-      active = false;
-    };
-  }, [form.batchId, setForm]); 
+    })
+    .catch((error) => {
+      if (!active) return;
 
+      console.error("Session API error:", error);
+
+      setGlobalError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load sessions."
+      );
+    })
+    .finally(() => {
+      if (!active) return;
+
+      setLoading((l) => ({
+        ...l,
+        sessions: false,
+      }));
+    });
+
+  return () => {
+    active = false;
+  };
+}, [
+  form.date,
+  form.teacherId,
+  form.classId,
+  form.batchId,
+]);
+
+  /* ---------------- cascading SLOT fetch effects ---------------- */
+
+  
   useEffect(() => {
     let active = true;
     setSlots([]);
