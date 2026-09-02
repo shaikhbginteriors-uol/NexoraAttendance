@@ -11,6 +11,10 @@ type ApiOption = {
   name: string;
 };
 
+/* ==============================
+   TEACHERS
+============================== */
+
 export async function fetchTeachersFromApi(
   date: string
 ): Promise<Option[]> {
@@ -42,7 +46,9 @@ export async function fetchTeachersFromApi(
   }));
 }
 
-
+/* ==============================
+   CLASSES
+============================== */
 
 export async function fetchClassesFromApi(
   date: string,
