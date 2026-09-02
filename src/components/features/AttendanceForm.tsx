@@ -473,6 +473,10 @@ useEffect(() => {
   /* ---------------- student ID validation (debounced) ---------------- */
   useEffect(() => {
     const id = form.studentId.trim();
+    if (!/^ST\d{5}$/i.test(id)) {
+      setStudentStatus({ state: "idle" });
+      return;
+    }
     if (!id) {
       setStudentStatus({ state: "idle" });
       return;
@@ -511,7 +515,7 @@ useEffect(() => {
           });
         }
       });
-    }, 500);
+    }, 250);
 
     return () => clearTimeout(handle);
   }, [form.studentId, form.teacherId, form.classId, form.batchId, form.slotId, day]);
