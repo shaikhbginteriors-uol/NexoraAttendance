@@ -20,7 +20,6 @@ import SelectField from "./SelectField";
 import StatusCard from "./StatusCard";
 import {
   getDayFromDate,
-  submitAttendance,
 } from "@/lib/mockData";
 
 import {
@@ -30,6 +29,7 @@ import {
   fetchSessionsFromApi,
   fetchSlotsFromApi,
   validateStudentFromApi,
+  submitAttendanceToApi,
 } from "@/lib/nexoraApi";
 
 import type { Option } from "@/types/attendance";
@@ -613,27 +613,29 @@ useEffect(() => {
 
     setSubmitting(true);
     setGlobalError(null);
-    const res = await submitAttendance({
+    const res = await submitAttendanceToApi({
       date: form.date,
       studentId: form.studentId,
       teacherId: form.teacherId,
       classId: form.classId,
       batchId: form.batchId,
+      session: form.session,
       slotId: form.slotId,
     });
     setSubmitting(false);
 
-    if (res.ok) {
+    if (res.ok && res.data) {
       toast.success("Attendance recorded successfully");
+    
       setSubmitted({
-        studentName: studentStatus.state === "valid" ? studentStatus.name : "",
-        teacherName,
-        className,
-        batchName,
-        session: form.session,
-        slotName,
-        date: form.date,
-        day,
+        studentName: res.data.studentName,
+        teacherName: res.data.teacher,
+        className: res.data.className,
+        batchName: res.data.batch,
+        session: res.data.session,
+        slotName: res.data.timeSlot,
+        date: res.data.date,
+        day: res.data.day,
       });
     } else if (res.duplicate) {
       setGlobalError("Attendance already submitted");
