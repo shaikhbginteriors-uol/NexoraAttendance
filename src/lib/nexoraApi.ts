@@ -292,6 +292,97 @@ export async function validateStudentFromApi(params: {
 }
 
 /* ==============================
+   ATTENDANCE SESSION STATUS
+============================== */
+
+export type AttendanceSessionStatus =
+  | "open"
+  | "not_started"
+  | "closed"
+  | "expired"
+  | "not_available";
+
+export type AttendanceSessionStatusResult = {
+  status: AttendanceSessionStatus;
+  controlId?: string;
+  mappingId?: string;
+  startTime?: string;
+  endTime?: string;
+  remainingSeconds: number;
+  message: string;
+};
+
+export async function fetchAttendanceSessionStatus(
+  params: {
+    date: string;
+    teacherId: string;
+    classId: string;
+    batchId: string;
+    session: string;
+    slotId: string;
+  }
+): Promise<AttendanceSessionStatusResult> {
+  try {
+    const response = await fetch("/api/nexora", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "attendanceSessionStatus",
+        payload: {
+          date: params.date,
+          teacherId: params.teacherId,
+          classId: params.classId,
+          batchId: params.batchId,
+          session: params.session,
+          slotId: params.slotId,
+        },
+      }),
+    });
+
+    const result: NexoraApiResponse<AttendanceSessionStatusResult> =
+      await response.json();
+
+    if (!response.ok || !result.ok || !result.data) {
+      return {
+        status: "not_available",
+        remainingSeconds: 0,
+        message:
+          result.error ||
+          "Unable to check attendance window.",
+      };
+    }
+
+    return {
+      status: result.data.status,
+      controlId: result.data.controlId,
+      mappingId: result.data.mappingId,
+      startTime: result.data.startTime,
+      endTime: result.data.endTime,
+      remainingSeconds: Number(
+        result.data.remainingSeconds || 0
+      ),
+      message:
+        result.data.message ||
+        "Attendance status loaded.",
+    };
+  } catch (error) {
+    console.error(
+      "Attendance session status error:",
+      error
+    );
+
+    return {
+      status: "not_available",
+      remainingSeconds: 0,
+      message:
+        "Unable to check attendance window. Please try again.",
+    };
+  }
+}
+
+/* ==============================
     SUBMIT BUTTON
 ============================== */
 
