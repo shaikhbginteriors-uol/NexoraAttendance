@@ -485,7 +485,7 @@ useEffect(() => {
 ]);
 
 
-/* YAHAN POINT 4 KA CODE PASTE KARNA HAI */
+
 /* ---------------- attendance window status ---------------- */
 
 useEffect(() => {
