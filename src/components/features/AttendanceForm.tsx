@@ -50,6 +50,18 @@ type AttendanceWindowStatus =
   | "expired"
   | "not_available";
 
+type AttendanceWindowState = {
+  status: AttendanceWindowStatus;
+  remainingSeconds: number;
+  message: string;
+};
+
+type AttendanceFormProps = {
+  onWindowStateChange?: (
+    state: AttendanceWindowState
+  ) => void;
+};
+
 const emptyForm = {
   date: "",
   teacherId: "",
@@ -73,7 +85,9 @@ const isFutureDate = (dateStr: string): boolean => {
   return dateStr > todayISO();
 };
 
-export default function AttendanceForm() {
+export default function AttendanceForm({
+    onWindowStateChange,
+  }: AttendanceFormProps) {
   const [form, setForm] = useState({ ...emptyForm, date: todayISO() });
   const [teachers, setTeachers] = useState<Option[]>([]);
   const [classes, setClasses] = useState<Option[]>([]);
@@ -606,6 +620,21 @@ useEffect(() => {
 }, [
   attendanceWindowStatus,
   remainingSeconds,
+]);
+
+  /* ---------------- sync attendance window with parent ---------------- */
+
+useEffect(() => {
+  onWindowStateChange?.({
+    status: attendanceWindowStatus,
+    remainingSeconds,
+    message: attendanceWindowMessage,
+  });
+}, [
+  attendanceWindowStatus,
+  remainingSeconds,
+  attendanceWindowMessage,
+  onWindowStateChange,
 ]);
   
   /* ---------------- student ID validation (debounced) ---------------- */
