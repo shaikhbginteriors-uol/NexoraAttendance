@@ -1,5 +1,4 @@
 
-import FlipTimer from "@/components/ui/FlipTimer";
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added useCallback
 import {
   Calendar,
