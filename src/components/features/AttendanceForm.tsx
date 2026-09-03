@@ -29,7 +29,7 @@ import {
   fetchSessionsFromApi,
   fetchSlotsFromApi,
   validateStudentFromApi,
-  fetchAttendanceSessionStatus,
+  fetchTeacherAttendanceSessionStatus,
   submitAttendanceToApi,
 } from "@/lib/nexoraApi";
 
@@ -503,15 +503,16 @@ useEffect(() => {
 /* ---------------- attendance window status ---------------- */
 
 useEffect(() => {
-  const contextComplete =
-    form.date &&
-    form.teacherId &&
-    form.classId &&
-    form.batchId &&
-    form.session &&
-    form.slotId;
-
-  if (!contextComplete) {
+  /*
+   * Timer ke liye ab sirf:
+   * Date + Teacher
+   * required hain.
+   */
+  if (
+    !form.date ||
+    !form.teacherId ||
+    isFutureDate(form.date)
+  ) {
     setAttendanceWindowStatus("idle");
     setRemainingSeconds(0);
     setAttendanceWindowMessage("");
@@ -520,63 +521,67 @@ useEffect(() => {
 
   let active = true;
 
-  const checkAttendanceWindow = async () => {
-    const result =
-      await fetchAttendanceSessionStatus({
-        date: form.date,
-        teacherId: form.teacherId,
-        classId: form.classId,
-        batchId: form.batchId,
-        session: form.session,
-        slotId: form.slotId,
-      });
+  const checkTeacherAttendanceWindow =
+    async () => {
+      const result =
+        await fetchTeacherAttendanceSessionStatus({
+          date: form.date,
+          teacherId: form.teacherId,
+        });
 
-    if (!active) return;
+      if (!active) return;
 
-    setAttendanceWindowStatus(
-      result.status
-    );
+      setAttendanceWindowStatus(
+        result.status
+      );
 
-    setRemainingSeconds(
-      result.status === "open"
-        ? Math.max(
-            0,
-            result.remainingSeconds
-          )
-        : 0
-    );
+      setRemainingSeconds(
+        result.status === "open"
+          ? Math.max(
+              0,
+              result.remainingSeconds
+            )
+          : 0
+      );
 
-    setAttendanceWindowMessage(
-      result.message || ""
-    );
-  };
+      setAttendanceWindowMessage(
+        result.message || ""
+      );
+    };
 
+  /*
+   * Teacher select hote hi immediately check.
+   */
   setAttendanceWindowStatus("checking");
   setRemainingSeconds(0);
   setAttendanceWindowMessage(
-    "Checking attendance window..."
+    "Checking teacher attendance session..."
   );
 
-  checkAttendanceWindow();
+  checkTeacherAttendanceWindow();
 
-  const pollTimer = window.setInterval(
-    checkAttendanceWindow,
-    10000
-  );
+  /*
+   * Teacher/Admin agar baad mein Start/Close kare
+   * to maximum ~10 sec mein Student Portal
+   * automatically update ho jayega.
+   */
+  const pollTimer =
+    window.setInterval(
+      checkTeacherAttendanceWindow,
+      10000
+    );
 
   return () => {
     active = false;
-    window.clearInterval(pollTimer);
+
+    window.clearInterval(
+      pollTimer
+    );
   };
 }, [
   form.date,
   form.teacherId,
-  form.classId,
-  form.batchId,
-  form.session,
-  form.slotId,
 ]);
-
 
 /* ---------------- local countdown ---------------- */
 
