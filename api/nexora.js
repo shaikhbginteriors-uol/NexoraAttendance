@@ -6,6 +6,7 @@ const ALLOWED_ACTIONS = new Set([
   "slots",
   "lookupStudent",
   "verifyEnrollment",
+  "attendanceSessionStatus",
   "submitAttendance",
 ]);
 
