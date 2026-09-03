@@ -7,6 +7,7 @@ const ALLOWED_ACTIONS = new Set([
   "lookupStudent",
   "verifyEnrollment",
   "attendanceSessionStatus",
+  "teacherAttendanceSessionStatus",
   "submitAttendance",
 ]);
 
