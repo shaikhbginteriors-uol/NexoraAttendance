@@ -29,6 +29,7 @@ import {
   fetchSessionsFromApi,
   fetchSlotsFromApi,
   validateStudentFromApi,
+  fetchAttendanceSessionStatus,
   submitAttendanceToApi,
 } from "@/lib/nexoraApi";
 
@@ -39,6 +40,15 @@ type StudentStatus =
   | { state: "loading" }
   | { state: "valid"; name: string }
   | { state: "invalid"; message: string };
+
+type AttendanceWindowStatus =
+  | "idle"
+  | "checking"
+  | "open"
+  | "not_started"
+  | "closed"
+  | "expired"
+  | "not_available";
 
 const emptyForm = {
   date: "",
@@ -58,6 +68,19 @@ const todayISO = () => {
   return `${y}-${m}-${day}`;
 };
 
+const formatRemainingTime = (totalSeconds: number) => {
+  const safeSeconds = Math.max(0, totalSeconds);
+
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(
+    seconds
+  ).padStart(2, "0")}`;
+};
+
+
+
 const isFutureDate = (dateStr: string): boolean => {
   if (!dateStr) return false;
   return dateStr > todayISO();
@@ -70,6 +93,7 @@ export default function AttendanceForm() {
   const [batches, setBatches] = useState<Option[]>([]);
   const [sessions, setSessions] = useState<Option[]>([]);
   const [slots, setSlots] = useState<Option[]>([]);
+  
 
   const [loading, setLoading] = useState({
     teachers: false,
@@ -80,6 +104,9 @@ export default function AttendanceForm() {
   });
 
   const [studentStatus, setStudentStatus] = useState<StudentStatus>({ state: "idle" });
+  const [attendanceWindowStatus, setAttendanceWindowStatus] = useState<AttendanceWindowStatus>("idle");
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+ const [attendanceWindowMessage, setAttendanceWindowMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -470,6 +497,130 @@ useEffect(() => {
   form.session,
 ]);
 
+
+/* YAHAN POINT 4 KA CODE PASTE KARNA HAI */
+/* ---------------- attendance window status ---------------- */
+
+useEffect(() => {
+  const contextComplete =
+    form.date &&
+    form.teacherId &&
+    form.classId &&
+    form.batchId &&
+    form.session &&
+    form.slotId;
+
+  if (!contextComplete) {
+    setAttendanceWindowStatus("idle");
+    setRemainingSeconds(0);
+    setAttendanceWindowMessage("");
+    return;
+  }
+
+  let active = true;
+
+  const checkAttendanceWindow = async () => {
+    const result =
+      await fetchAttendanceSessionStatus({
+        date: form.date,
+        teacherId: form.teacherId,
+        classId: form.classId,
+        batchId: form.batchId,
+        session: form.session,
+        slotId: form.slotId,
+      });
+
+    if (!active) return;
+
+    setAttendanceWindowStatus(
+      result.status
+    );
+
+    setRemainingSeconds(
+      result.status === "open"
+        ? Math.max(
+            0,
+            result.remainingSeconds
+          )
+        : 0
+    );
+
+    setAttendanceWindowMessage(
+      result.message || ""
+    );
+  };
+
+  setAttendanceWindowStatus("checking");
+  setRemainingSeconds(0);
+  setAttendanceWindowMessage(
+    "Checking attendance window..."
+  );
+
+  checkAttendanceWindow();
+
+  const pollTimer = window.setInterval(
+    checkAttendanceWindow,
+    10000
+  );
+
+  return () => {
+    active = false;
+    window.clearInterval(pollTimer);
+  };
+}, [
+  form.date,
+  form.teacherId,
+  form.classId,
+  form.batchId,
+  form.session,
+  form.slotId,
+]);
+
+
+/* ---------------- local countdown ---------------- */
+
+useEffect(() => {
+  if (
+    attendanceWindowStatus !== "open"
+  ) {
+    return;
+  }
+
+  const countdownTimer =
+    window.setInterval(() => {
+      setRemainingSeconds((current) =>
+        Math.max(0, current - 1)
+      );
+    }, 1000);
+
+  return () => {
+    window.clearInterval(
+      countdownTimer
+    );
+  };
+}, [attendanceWindowStatus]);
+
+
+/* ---------------- local expiry ---------------- */
+
+useEffect(() => {
+  if (
+    attendanceWindowStatus === "open" &&
+    remainingSeconds <= 0
+  ) {
+    setAttendanceWindowStatus(
+      "expired"
+    );
+
+    setAttendanceWindowMessage(
+      "Attendance window has expired."
+    );
+  }
+}, [
+  attendanceWindowStatus,
+  remainingSeconds,
+]);
+  
   /* ---------------- student ID validation (debounced) ---------------- */
  useEffect(() => {
   const id = form.studentId.trim().toUpperCase();
@@ -574,6 +725,8 @@ useEffect(() => {
     !!form.batchId &&
     !!form.session &&
     !!form.slotId &&
+    attendanceWindowStatus === "open" &&
+    remainingSeconds > 0 &&
     studentStatus.state === "valid" &&
     !submitting;
 
