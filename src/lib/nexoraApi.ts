@@ -383,6 +383,101 @@ export async function fetchAttendanceSessionStatus(
 }
 
 /* ==============================
+   TEACHER ATTENDANCE SESSION STATUS
+============================== */
+
+export type TeacherAttendanceSessionStatusResult = {
+  status:
+    | "open"
+    | "not_started"
+    | "closed"
+    | "expired"
+    | "not_available";
+
+  controlId?: string;
+  mappingId?: string;
+
+  teacherId?: string;
+  teacherName?: string;
+
+  classId?: string;
+  className?: string;
+
+  batchId?: string;
+  batchName?: string;
+
+  slotId?: string;
+  timeSlot?: string;
+
+  session?: string;
+
+  startTime?: string;
+  endTime?: string;
+
+  remainingSeconds: number;
+  message: string;
+};
+
+export async function fetchTeacherAttendanceSessionStatus(
+  params: {
+    date: string;
+    teacherId: string;
+  }
+): Promise<TeacherAttendanceSessionStatusResult> {
+  try {
+    const response = await fetch("/api/nexora", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "teacherAttendanceSessionStatus",
+        payload: {
+          date: params.date,
+          teacherId: params.teacherId,
+        },
+      }),
+    });
+
+    const result: NexoraApiResponse<TeacherAttendanceSessionStatusResult> =
+      await response.json();
+
+    if (!response.ok || !result.ok || !result.data) {
+      return {
+        status: "not_available",
+        remainingSeconds: 0,
+        message:
+          result.error ||
+          "Unable to check teacher attendance session.",
+      };
+    }
+
+    return {
+      ...result.data,
+      remainingSeconds: Number(
+        result.data.remainingSeconds || 0
+      ),
+      message:
+        result.data.message ||
+        "Attendance status loaded.",
+    };
+  } catch (error) {
+    console.error(
+      "Teacher attendance session status error:",
+      error
+    );
+
+    return {
+      status: "not_available",
+      remainingSeconds: 0,
+      message:
+        "Unable to check attendance session. Please try again.",
+    };
+  }
+}
+
+
+/* ==============================
     SUBMIT BUTTON
 ============================== */
 
