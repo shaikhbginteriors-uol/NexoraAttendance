@@ -746,14 +746,26 @@ useEffect(() => {
     studentStatus.state === "valid" &&
     !submitting;
 
-  const handleReset = useCallback(() => {
-    setForm({ ...emptyForm, date: todayISO() });
-    setStudentStatus({ state: "idle" });
-    setErrors({});
-    setGlobalError(null);
-    setSubmitted(null);
-    toast.info("Form reset");
-  }, [setForm]);
+    const handleReset = useCallback(() => {
+      setForm({
+        ...emptyForm,
+        date: todayISO(),
+      });
+    
+      setStudentStatus({
+        state: "idle",
+      });
+    
+      setAttendanceWindowStatus("idle");
+      setRemainingSeconds(0);
+      setAttendanceWindowMessage("");
+    
+      setErrors({});
+      setGlobalError(null);
+      setSubmitted(null);
+    
+      toast.info("Form reset");
+    }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -779,7 +791,21 @@ useEffect(() => {
       setGlobalError("Please correct the highlighted fields.");
       return;
     }
-
+  
+    if (
+        attendanceWindowStatus !== "open" ||
+        remainingSeconds <= 0
+      ) {
+        const message =
+          attendanceWindowMessage ||
+          "Attendance window is currently not open.";
+      
+        setGlobalError(message);
+        toast.error(message);
+      
+        return;
+      }
+    
     setSubmitting(true);
     setGlobalError(null);
     const res = await submitAttendanceToApi({
