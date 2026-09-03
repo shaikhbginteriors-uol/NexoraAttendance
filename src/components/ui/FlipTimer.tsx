@@ -47,36 +47,44 @@ function FlipUnit({
   }, [value, current]);
 
   return (
-    <div className="min-w-0 flex-1">
-      <div className="nexora-flip-card">
-        {/* Static top */}
-        <div className="nexora-flip-half nexora-flip-top">
+    <div className="nexora-unit">
+      <div className="nexora-flip-shell">
+        {/* Main number */}
+        <div className="nexora-main-number">
           {current}
         </div>
 
-        {/* Static bottom */}
-        <div className="nexora-flip-half nexora-flip-bottom">
-          {current}
+        {/* Center split */}
+        <div className="nexora-center-line" />
+
+        {/* Hinges */}
+        <div className="nexora-hinge nexora-hinge-left">
+          <span />
         </div>
 
-        {/* Animation */}
+        <div className="nexora-hinge nexora-hinge-right">
+          <span />
+        </div>
+
+        {/* Real flip animation */}
         {flipping && (
           <>
-            <div className="nexora-flip-half nexora-flip-top nexora-flip-top-animate">
-              {previous}
+            <div className="nexora-flap nexora-flap-top nexora-flip-out">
+              <div className="nexora-flap-number nexora-flap-number-top">
+                {previous}
+              </div>
             </div>
 
-            <div className="nexora-flip-half nexora-flip-bottom nexora-flip-bottom-animate">
-              {current}
+            <div className="nexora-flap nexora-flap-bottom nexora-flip-in">
+              <div className="nexora-flap-number nexora-flap-number-bottom">
+                {current}
+              </div>
             </div>
           </>
         )}
-
-        {/* Middle divider */}
-        <div className="pointer-events-none absolute left-0 right-0 top-1/2 z-20 h-px bg-black/20" />
       </div>
 
-      <p className="mt-2 text-center text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] text-white/65">
+      <p className="nexora-flip-label">
         {label}
       </p>
     </div>
@@ -102,9 +110,9 @@ export default function FlipTimer({
 
   const statusText =
     status === "open"
-      ? "Window Open"
+      ? "Open"
       : status === "checking"
-      ? "Checking..."
+      ? "Checking"
       : status === "not_started"
       ? "Not Started"
       : status === "closed"
@@ -117,10 +125,10 @@ export default function FlipTimer({
 
   return (
     <div className="w-full">
-      <div className="rounded-2xl border border-white/15 bg-white/[0.08] p-3 sm:p-4 shadow-xl shadow-black/10 backdrop-blur-md">
-        {/* Top */}
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+      <div className="rounded-2xl border border-white/15 bg-white/[0.07] px-4 py-4 sm:px-5 sm:py-5 shadow-xl shadow-black/10 backdrop-blur-md">
+        {/* Header */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-white/70">
             Time Remaining
           </p>
 
@@ -131,7 +139,7 @@ export default function FlipTimer({
                   ? "bg-emerald-400 animate-pulse"
                   : status === "checking"
                   ? "bg-amber-300 animate-pulse"
-                  : "bg-white/40"
+                  : "bg-white/45"
               }`}
             />
 
@@ -139,16 +147,12 @@ export default function FlipTimer({
           </span>
         </div>
 
-        {/* Flip units */}
-        <div className="flex items-start gap-2.5 sm:gap-3">
+        {/* Cards */}
+        <div className="flex items-start justify-center gap-3 sm:gap-4">
           <FlipUnit
             value={pad(minutes)}
             label="Minutes"
           />
-
-          <div className="pt-6 text-xl sm:text-2xl font-black text-white/45">
-            :
-          </div>
 
           <FlipUnit
             value={pad(secs)}
@@ -156,133 +160,307 @@ export default function FlipTimer({
           />
         </div>
 
-        {/* Small status message */}
         {message && status !== "idle" && (
-          <p className="mt-2.5 truncate text-center text-[9px] sm:text-[10px] text-white/55">
+          <p className="mt-3 truncate text-center text-[9px] sm:text-[10px] text-white/55">
             {message}
           </p>
         )}
       </div>
 
       <style>{`
-        .nexora-flip-card {
+        .nexora-unit {
+          width: min(46%, 155px);
+          min-width: 0;
+        }
+
+        .nexora-flip-shell {
+          --flip-height: 112px;
+
           position: relative;
           width: 100%;
-          height: 82px;
+          height: var(--flip-height);
+
+          overflow: hidden;
+
+          border-radius: 15px;
+
+          background:
+            linear-gradient(
+              180deg,
+              #fafafa 0%,
+              #f1f1f2 49.5%,
+              #e6e6e8 50%,
+              #f7f7f8 100%
+            );
+
+          border:
+            1px solid rgba(0, 0, 0, 0.08);
+
+          box-shadow:
+            0 13px 22px rgba(0, 0, 0, 0.22),
+            inset 0 1px 1px rgba(255,255,255,.8);
+
           perspective: 900px;
         }
 
-        .nexora-flip-half {
+        .nexora-main-number {
           position: absolute;
-          left: 0;
-          width: 100%;
-          height: 50%;
-          overflow: hidden;
+          inset: 0;
 
           display: flex;
+          align-items: center;
           justify-content: center;
 
-          font-size: 2.45rem;
+          z-index: 2;
+
+          color: #17181b;
+
+          font-size: 4.2rem;
           font-weight: 900;
           line-height: 1;
+          letter-spacing: -0.05em;
 
-          color: #171b1f;
+          font-variant-numeric:
+            tabular-nums;
+        }
 
-          border: 1px solid rgba(0, 0, 0, 0.08);
+        .nexora-center-line {
+          position: absolute;
+
+          left: 0;
+          right: 0;
+          top: 50%;
+
+          height: 1px;
+
+          z-index: 20;
+
+          background:
+            rgba(0, 0, 0, 0.25);
+
+          box-shadow:
+            0 1px 0 rgba(255,255,255,.65);
+        }
+
+        .nexora-hinge {
+          position: absolute;
+
+          top: 50%;
+
+          z-index: 25;
+
+          width: 14px;
+          height: 19px;
+
+          transform:
+            translateY(-50%);
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 2px;
+
+          background:
+            linear-gradient(
+              90deg,
+              #c7c7c9,
+              #efeff0,
+              #a9a9ac
+            );
+
+          border:
+            1px solid rgba(0,0,0,.16);
+
+          box-shadow:
+            0 1px 2px rgba(0,0,0,.22);
+        }
+
+        .nexora-hinge span {
+          width: 100%;
+          height: 2px;
+
+          background:
+            rgba(0,0,0,.35);
+        }
+
+        .nexora-hinge-left {
+          left: -5px;
+        }
+
+        .nexora-hinge-right {
+          right: -5px;
+        }
+
+        .nexora-flip-label {
+          margin-top: 10px;
+
+          text-align: center;
+
+          font-size: 11px;
+          font-weight: 800;
+
+          text-transform: uppercase;
+
+          letter-spacing: .12em;
+
+          color:
+            rgba(255,255,255,.75);
+        }
+
+        /* =========================
+           FLIP ANIMATION
+        ========================= */
+
+        .nexora-flap {
+          position: absolute;
+
+          left: 0;
+          right: 0;
+
+          height: 50%;
+
+          overflow: hidden;
+
+          z-index: 15;
 
           backface-visibility: hidden;
           -webkit-backface-visibility: hidden;
         }
 
-        .nexora-flip-top {
+        .nexora-flap-top {
           top: 0;
-          align-items: flex-end;
-          padding-bottom: 0.05em;
 
-          border-radius: 12px 12px 3px 3px;
+          transform-origin:
+            bottom;
 
-          background: linear-gradient(
-            180deg,
-            #ffffff 0%,
-            #eef0f2 100%
-          );
-
-          transform-origin: bottom;
-
-          box-shadow:
-            0 4px 10px rgba(0, 0, 0, 0.12);
+          background:
+            linear-gradient(
+              180deg,
+              #fafafa 0%,
+              #eeeeef 100%
+            );
         }
 
-        .nexora-flip-bottom {
+        .nexora-flap-bottom {
           bottom: 0;
-          align-items: flex-start;
-          padding-top: 0.05em;
 
-          border-radius: 3px 3px 12px 12px;
+          transform-origin:
+            top;
 
-          background: linear-gradient(
-            180deg,
-            #e9ecef 0%,
-            #ffffff 100%
-          );
-
-          transform-origin: top;
-
-          box-shadow:
-            0 8px 18px rgba(0, 0, 0, 0.15);
+          background:
+            linear-gradient(
+              180deg,
+              #e6e6e8 0%,
+              #f7f7f8 100%
+            );
         }
 
-        .nexora-flip-top-animate {
-          z-index: 12;
+        .nexora-flap-number {
+          position: absolute;
+
+          left: 0;
+
+          width: 100%;
+          height: var(--flip-height);
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #17181b;
+
+          font-size: 4.2rem;
+          font-weight: 900;
+          line-height: 1;
+          letter-spacing: -0.05em;
+
+          font-variant-numeric:
+            tabular-nums;
+        }
+
+        .nexora-flap-number-top {
+          top: 0;
+        }
+
+        .nexora-flap-number-bottom {
+          bottom: 0;
+        }
+
+        .nexora-flip-out {
+          animation:
+            nexoraTopFlip
+            .55s ease-in forwards;
+        }
+
+        .nexora-flip-in {
+          transform:
+            rotateX(90deg);
 
           animation:
-            nexoraFlipTop
-            0.55s ease-in forwards;
+            nexoraBottomFlip
+            .55s ease-out forwards;
         }
 
-        .nexora-flip-bottom-animate {
-          z-index: 11;
-
-          transform: rotateX(90deg);
-
-          animation:
-            nexoraFlipBottom
-            0.55s ease-out forwards;
-        }
-
-        @keyframes nexoraFlipTop {
-          from {
-            transform: rotateX(0deg);
+        @keyframes nexoraTopFlip {
+          0% {
+            transform:
+              rotateX(0deg);
           }
 
-          to {
-            transform: rotateX(-90deg);
+          100% {
+            transform:
+              rotateX(-90deg);
           }
         }
 
-        @keyframes nexoraFlipBottom {
-          from {
-            transform: rotateX(90deg);
+        @keyframes nexoraBottomFlip {
+          0% {
+            transform:
+              rotateX(90deg);
           }
 
-          to {
-            transform: rotateX(0deg);
+          100% {
+            transform:
+              rotateX(0deg);
           }
         }
 
-        @media (min-width: 640px) {
-          .nexora-flip-card {
-            height: 96px;
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 640px) {
+          .nexora-unit {
+            width: calc(50% - 6px);
           }
 
-          .nexora-flip-half {
-            font-size: 3rem;
+          .nexora-flip-shell {
+            --flip-height: 94px;
+
+            border-radius: 13px;
+          }
+
+          .nexora-main-number,
+          .nexora-flap-number {
+            font-size: 3.45rem;
+          }
+
+          .nexora-flip-label {
+            margin-top: 8px;
+
+            font-size: 9px;
+          }
+
+          .nexora-hinge {
+            width: 12px;
+            height: 16px;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .nexora-flip-top-animate,
-          .nexora-flip-bottom-animate {
+          .nexora-flip-out,
+          .nexora-flip-in {
             animation: none !important;
           }
         }
