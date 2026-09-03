@@ -1,8 +1,26 @@
 import logo from "@/assets/nexora-logo.png";
-import { GraduationCap, Sparkles, Moon, Sun } from "lucide-react";
+import {
+  GraduationCap,
+  Sparkles,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import FlipTimer, {
+  type FlipTimerStatus,
+} from "@/components/ui/FlipTimer";
 
-export default function BrandHeader() {
+type BrandHeaderProps = {
+  attendanceWindowStatus?: FlipTimerStatus;
+  remainingSeconds?: number;
+  attendanceWindowMessage?: string;
+};
+
+export default function BrandHeader({
+  attendanceWindowStatus = "idle",
+  remainingSeconds = 0,
+  attendanceWindowMessage = "",
+}: BrandHeaderProps) {
   const { theme, toggle } = useTheme();
 
   return (
@@ -23,8 +41,12 @@ export default function BrandHeader() {
                 className="h-11 w-11 sm:h-14 sm:w-14 object-contain"
               />
             </div>
+
             <div className="hidden sm:block">
-              <p className="text-white/95 text-lg font-bold leading-tight tracking-tight">NEXORA</p>
+              <p className="text-white/95 text-lg font-bold leading-tight tracking-tight">
+                NEXORA
+              </p>
+
               <p className="text-white/70 text-[11px] font-medium uppercase tracking-[0.14em]">
                 Montessori & Modern Skills Council
               </p>
@@ -35,8 +57,16 @@ export default function BrandHeader() {
             <button
               type="button"
               onClick={toggle}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={
+                theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
+              title={
+                theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
               className="group inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20 hover:ring-white/40 active:scale-95"
             >
               {theme === "dark" ? (
@@ -45,6 +75,7 @@ export default function BrandHeader() {
                 <Moon className="h-4 w-4 transition-transform group-hover:-rotate-12" />
               )}
             </button>
+
             <div className="hidden sm:flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-brand-orange animate-pulse" />
               Attendance Portal
@@ -52,24 +83,49 @@ export default function BrandHeader() {
           </div>
         </div>
 
-        {/* Hero content */}
-        <div className="mt-10 sm:mt-14 max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white ring-1 ring-white/20 backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
-            Official NEXORA Portal
-          </div>
-          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
-            Student Attendance Form
-          </h1>
-          <p className="mt-3 text-base sm:text-lg text-white/85 max-w-2xl">
-            Please fill in your attendance details carefully. Your teacher will
-            verify submission in real time.
-          </p>
+        {/* Hero content + Timer */}
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 lg:gap-10 lg:items-end">
+          
+          {/* Left content */}
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white ring-1 ring-white/20 backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-brand-orange" />
+              Official NEXORA Portal
+            </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-            <Pill icon={<GraduationCap className="h-3.5 w-3.5" />} label="Trusted by NEXORA teachers" />
-            <Pill label="Mobile-friendly" />
-            <Pill label="Secure submission" tone="accent" />
+            <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+              Student Attendance Form
+            </h1>
+
+            <p className="mt-3 text-base sm:text-lg text-white/85 max-w-2xl">
+              Please fill in your attendance details carefully. Your teacher
+              will verify submission in real time.
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
+              <Pill
+                icon={
+                  <GraduationCap className="h-3.5 w-3.5" />
+                }
+                label="Trusted by NEXORA teachers"
+              />
+
+              <Pill label="Mobile-friendly" />
+
+              <Pill
+                label="Secure submission"
+                tone="accent"
+              />
+            </div>
+          </div>
+
+          {/* Flip Timer */}
+          <div className="w-full lg:w-[380px] lg:justify-self-end">
+            <FlipTimer
+              seconds={remainingSeconds}
+              status={attendanceWindowStatus}
+              message={attendanceWindowMessage}
+            />
           </div>
         </div>
       </div>
@@ -101,10 +157,12 @@ function Pill({
 }) {
   const base =
     "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] sm:text-xs font-medium ring-1 backdrop-blur";
+
   const styles =
     tone === "accent"
       ? "bg-brand-orange/25 text-white ring-brand-orange/40"
       : "bg-white/10 text-white/90 ring-white/20";
+
   return (
     <span className={`${base} ${styles}`}>
       {icon}
