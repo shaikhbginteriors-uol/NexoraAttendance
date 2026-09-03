@@ -81,7 +81,7 @@ export default function FlipTimer({
       : message || "Waiting for teacher/admin to start the attendance window.";
 
   return (
-    <div className="mt-6 rounded-2xl border border-brand-teal/20 bg-brand-teal-light/30 p-4 sm:p-6">
+    <div className="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-4 sm:p-6">
       <div className="text-center">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-teal">
           Student Attendance Window
